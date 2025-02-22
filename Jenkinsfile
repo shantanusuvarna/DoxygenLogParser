@@ -3,20 +3,20 @@ pipeline {
     stages {
         stage('Clone RepoA') {
             steps {
-                git branch: 'main', url: 'https://github.com/shantanusuvarna/RepoA.git'
+                git branch: 'master', url: 'https://github.com/shantanusuvarna/RepoA.git'
             }
         }
         stage('Modify Doxygen Config for Warnings') {
             steps {
-                sh 'doxygen -g Doxyfile'
-                sh "sed -i 's|INPUT.*|INPUT = src|' Doxyfile"
-                sh "sed -i 's|GENERATE_HTML.*|GENERATE_HTML = YES|' Doxyfile"
-                sh "sed -i 's|WARN_LOGFILE.*|WARN_LOGFILE = warnings.log|' Doxyfile"
+                bat "doxygen -g Doxyfile"
+                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'INPUT.*', 'INPUT = src' | Set-Content Doxyfile\""
+                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'GENERATE_HTML.*', 'GENERATE_HTML = YES' | Set-Content Doxyfile\""
+                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'WARN_LOGFILE.*', 'WARN_LOGFILE = warnings.log' | Set-Content Doxyfile\""
             }
         }
         stage('Run Doxygen') {
             steps {
-                sh 'doxygen Doxyfile'
+                bat "doxygen Doxyfile"
             }
         }
         stage('Clone RepoC') {
@@ -26,7 +26,7 @@ pipeline {
         }
         stage('Run Log Parser') {
             steps {
-                sh 'python log_parser.py warnings.log parsed_warnings.csv'
+                bat "python log_parser.py warnings.log parsed_warnings.csv"
                 archiveArtifacts artifacts: 'parsed_warnings.csv', fingerprint: true
             }
         }
