@@ -28,7 +28,7 @@ pipeline {
         }
         stage('Archive Documentation') {
             steps {
-                bat 'powershell Compress-Archive -Path html -DestinationPath doc.zip'
+                bat 'powershell Compress-Archive -Path html -DestinationPath doc.zip -Force'
                 archiveArtifacts artifacts: 'doc.zip', fingerprint: true
             }
         }
