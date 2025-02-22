@@ -1,33 +1,35 @@
 pipeline {
     agent any
+    
     stages {
         stage('Clone RepoA') {
             steps {
                 git branch: 'master', url: 'https://github.com/shantanusuvarna/RepoA.git'
             }
         }
-        stage('Modify Doxygen Config for Warnings') {
+        stage('Generate Doxygen Config') {
             steps {
-                bat "doxygen -g Doxyfile"
-                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'INPUT.*', 'INPUT = src' | Set-Content Doxyfile\""
-                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'GENERATE_HTML.*', 'GENERATE_HTML = YES' | Set-Content Doxyfile\""
-                bat "powershell -Command \"(Get-Content Doxyfile) -replace 'WARN_LOGFILE.*', 'WARN_LOGFILE = warnings.log' | Set-Content Doxyfile\""
+                bat 'doxygen -g Doxyfile'
+                bat 'powershell -Command "Set-ExecutionPolicy Unrestricted -Scope Process -Force"'
+                bat """powershell -Command "(Get-Content Doxyfile) -replace 'INPUT\\s*=.*', 'INPUT = src' | Set-Content Doxyfile" """
+                bat """powershell -Command "(Get-Content Doxyfile) -replace 'GENERATE_HTML\\s*=.*', 'GENERATE_HTML = YES' | Set-Content Doxyfile" """
+                bat 'type Doxyfile'  // Print modified file for debugging
             }
         }
         stage('Run Doxygen') {
             steps {
-                bat "doxygen Doxyfile"
+                bat 'doxygen Doxyfile'  // Run doxygen with the modified config
             }
         }
-        stage('Clone RepoC') {
+        stage('Check Documentation Output') {
             steps {
-                git branch: 'main', url: 'https://github.com/shantanusuvarna/DoxygenLogParser'
+                bat 'if not exist html echo "Doxygen output not found!" && exit /b 1'
             }
         }
-        stage('Run Log Parser') {
+        stage('Archive Documentation') {
             steps {
-                bat "python log_parser.py warnings.log parsed_warnings.csv"
-                archiveArtifacts artifacts: 'parsed_warnings.csv', fingerprint: true
+                bat 'powershell Compress-Archive -Path html -DestinationPath doc.zip'
+                archiveArtifacts artifacts: 'doc.zip', fingerprint: true
             }
         }
     }
